@@ -1,0 +1,25 @@
+PARK2EARN V2 — REAL BACKEND UPGRADE (WINDOWS)
+
+START THE SITE:
+1. Unzip park2earn-fullstack.zip into a NEW folder.
+2. VS Code > File > Open Folder > park2earn-fullstack.
+3. Terminal > New Terminal:
+     npm.cmd install
+     npm.cmd run dev
+4. Open http://localhost:3000
+
+REAL DATABASE SETUP:
+5. Create a free Supabase project at https://supabase.com/dashboard
+6. Supabase SQL Editor: copy/paste and RUN the included supabase/setup.sql
+7. In the project's root make .env.local, copying the TWO settings from .env.example
+8. Get Project URL and PUBLISHABLE/ANON key from Supabase Project Settings > API
+9. Ctrl+C then npm.cmd run dev again.
+10. Visit /login, sign up, test vehicle listing and bookings.
+
+WITHOUT .env.local: your old Riya/Aarav local demo stays fully usable.
+
+IMPORTANT:
+- Do NOT share database passwords, service_role keys, or secret keys.
+- Fictional listings and simulated rental payments only.
+- SQL setup is meant to run once on a fresh Supabase project.
+- For full instructions see README.md.

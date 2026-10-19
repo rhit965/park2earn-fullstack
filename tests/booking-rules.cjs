@@ -1,0 +1,20 @@
+/* Pure booking-time helper tests. Run: npm.cmd test (or npm test). */
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const ts=require('typescript');
+const file=path.join(__dirname,'../lib/data.ts');
+const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;
+const mod={exports:{}};
+new Function('require','module','exports',js)(require,mod,mod.exports);
+const {hoursBetween,overlaps,toMinutes}=mod.exports;
+assert.equal(hoursBetween('11:00','13:00'),2);
+assert.equal(hoursBetween('10:30','12:00'),1.5);
+assert.equal(hoursBetween('13:00','11:00'),-2);
+assert.equal(toMinutes('13:45'),825);
+assert.equal(overlaps('11:00','13:00','12:00','14:00'),true);
+assert.equal(overlaps('11:00','13:00','13:00','15:00'),false);
+assert.equal(overlaps('11:00','13:00','09:00','11:00'),false);
+assert.equal(overlaps('11:00','13:00','10:00','14:00'),true);
+console.log('8 booking-time helper checks passed.');
+console.log('Supabase RLS / database transaction behavior must be integration-tested in your project.');
