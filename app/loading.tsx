@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="wrap page-skeleton" role="status"><div className="skeleton skeleton-heading"/><div className="skeleton skeleton-card"/><p>Loading your next stop…</p></div>}

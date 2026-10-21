@@ -1,0 +1,43 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const ts=require('typescript');
+function load(name){const mod={exports:{}};const source=fs.readFileSync(path.join(__dirname,'../lib',name+'.ts'),'utf8');const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;new Function('require','module','exports',js)(require,mod,mod.exports);return mod.exports;}
+const {slotError,transitionError,listingError,isVehicle,isBooking}=load('validation');
+const {csvCell,bookingsCSV}=load('export');
+const {INITIAL_VEHICLES,seedBookings}=load('data');
+let count=0;function check(name,fn){fn();count++;console.log('PASS '+name);}
+const now=Date.parse('2026-10-20T04:30:00Z'); // 10:00 IST
+check('future slot uses IST, not server timezone',()=>assert.equal(slotError('2026-10-20','11:00','12:00',now),null));
+check('pickup at current time is rejected',()=>assert.ok(slotError('2026-10-20','10:00','12:00',now)));
+check('past pickup is rejected',()=>assert.ok(slotError('2026-10-19','11:00','12:00',now)));
+check('invalid calendar date is rejected',()=>assert.ok(slotError('2026-02-30','11:00','12:00',0)));
+check('invalid time is rejected',()=>assert.ok(slotError('2026-10-21','25:00','26:00',now)));
+check('empty time is rejected',()=>assert.ok(slotError('2026-10-21','','12:00',now)));
+check('eight hour upper bound is inclusive',()=>assert.equal(slotError('2026-10-21','10:00','18:00',now),null));
+check('long bookings rejected',()=>assert.ok(slotError('2026-10-21','10:00','18:01',now)));
+check('reversed time rejected',()=>assert.ok(slotError('2026-10-21','14:00','13:00',now)));
+check('zero duration rejected',()=>assert.ok(slotError('2026-10-21','14:00','14:00',now)));
+const b=seedBookings()[0];
+check('owner can accept pending booking',()=>assert.equal(transitionError(b,b.ownerId,'confirmed'),null));
+check('owner can reject pending booking',()=>assert.equal(transitionError(b,b.ownerId,'rejected'),null));
+check('renter can cancel own booking',()=>assert.equal(transitionError(b,b.renterId,'cancelled'),null));
+check('stranger cannot cancel booking',()=>assert.ok(transitionError(b,'stranger','cancelled')));
+check('renter cannot approve booking',()=>assert.ok(transitionError(b,b.renterId,'confirmed')));
+check('owner cannot complete pending booking',()=>assert.ok(transitionError(b,b.ownerId,'completed')));
+check('completed bookings cannot be reopened',()=>assert.ok(transitionError({...b,status:'completed'},b.ownerId,'confirmed')));
+check('unknown booking returns an error',()=>assert.ok(transitionError(undefined,b.ownerId,'confirmed')));
+const v=INITIAL_VEHICLES[0];
+check('valid listing accepted',()=>assert.equal(listingError(v),null));
+check('NaN price rejected',()=>assert.ok(listingError({...v,rate:NaN})));
+check('negative price rejected',()=>assert.ok(listingError({...v,rate:-1})));
+check('blank city rejected',()=>assert.ok(listingError({...v,city:'  '})));
+check('short availability rejected',()=>assert.ok(listingError({...v,from:'11:00',to:'11:30'})));
+check('oversized description rejected',()=>assert.ok(listingError({...v,description:'a'.repeat(2001)})));
+check('corrupt vehicle cache rejected',()=>assert.equal(isVehicle({id:'1'}),false));
+check('corrupt booking cache rejected',()=>assert.equal(isBooking(null),false));
+check('valid cached records accepted',()=>{assert.ok(isVehicle(v));assert.ok(isBooking(b));});
+check('CSV formulas neutralized',()=>assert.equal(csvCell(' =HYPERLINK("x")'),'"\' =HYPERLINK(""x"")"'));
+check('CSV embedded quote escaped',()=>assert.equal(csvCell('A"B'),'"A""B"'));
+check('CSV includes booking and labels simulated amounts',()=>{const csv=bookingsCSV([b],[v]);assert.ok(csv.includes(b.id));assert.ok(csv.includes('simulated'));assert.ok(csv.startsWith('\ufeff'));});
+console.log(`${count} quality checks passed.`);

@@ -1,13 +1,14 @@
 {
   "name": "park2earn-fullstack",
-  "version": "2.0.0",
+  "version": "4.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "test": "node tests/booking-rules.cjs"
+    "test": "node tests/booking-rules.cjs && node tests/quality-rules.cjs && node tests/payment-security.cjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
@@ -27,7 +28,8 @@
   },
   "overrides": {
     "next": {
-      "postcss": "8.5.23"
-    }
+      "postcss": "^8.5.23"
+    },
+    "postcss-selector-parser": "^7.1.6"
   }
 }

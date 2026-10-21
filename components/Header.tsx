@@ -2,19 +2,20 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowUpRight, ChevronDown, LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDemo } from "@/lib/store";
 import Brand from "./Brand";
 export default function Header(){
  const pathname=usePathname(),router=useRouter();
  const {user,mode,setMode,profile,cloudEnabled,authenticated,signOut}=useDemo();
  const [open,setOpen]=useState(false),[accountOpen,setAccountOpen]=useState(false);
+ useEffect(()=>{const close=(e:KeyboardEvent)=>{if(e.key==="Escape"){setOpen(false);setAccountOpen(false);}};window.addEventListener("keydown",close);return()=>window.removeEventListener("keydown",close);},[]);
  const nav=[{href:"/explore",label:"Explore rides"},{href:"/how-it-works",label:"How it works"},{href:"/bookings",label:"My bookings"},{href:"/dashboard",label:"Dashboard"}];
  function switchView(next:"owner"|"renter"){setMode(next);setAccountOpen(false);setOpen(false);}
  async function exit(){await signOut();setAccountOpen(false);router.push("/login");}
  return <header className="site-header"><div className="nav-container">
   <Brand/>
-  <nav className={`main-nav ${open?"nav-open":""}`} aria-label="Main navigation">
+  <nav className={`main-nav ${open?"nav-open":""}`} id="primary-navigation" aria-label="Main navigation">
    {nav.map(item=><Link key={item.href} href={item.href} onClick={()=>setOpen(false)} className={pathname===item.href?"nav-active":""}>{item.label}</Link>)}
    <Link className="mobile-nav-cta" href="/list-vehicle" onClick={()=>setOpen(false)}>List a vehicle <ArrowUpRight size={16}/></Link>
   </nav>
@@ -31,7 +32,7 @@ export default function Header(){
      </div>}
     </>}
    </div>
-   <button className="mobile-toggle" aria-label="Toggle navigation" onClick={()=>setOpen(v=>!v)}>{open?<X size={24}/>:<Menu size={24}/>}</button>
+   <button className="mobile-toggle" aria-label="Toggle navigation" aria-expanded={open} aria-controls="primary-navigation" onClick={()=>setOpen(v=>!v)}>{open?<X size={24}/>:<Menu size={24}/>}</button>
   </div>
  </div></header>;
 }

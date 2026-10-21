@@ -10,12 +10,13 @@ export default function Login(){
  const {mode,setMode,cloudEnabled,authenticated,signIn,signUp}=useDemo();
  const [form,setForm]=useState<"login"|"signup">("login");
  const [name,setName]=useState(""),[email,setEmail]=useState(""),[password,setPassword]=useState("");
+ const [accepted,setAccepted]=useState(false);
  const [working,setWorking]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState("");
  const [nextPage,setNextPage]=useState("/dashboard");
- useEffect(()=>{const intended=new URLSearchParams(window.location.search).get("next")||"/dashboard";setNextPage(intended.startsWith("/")&&!intended.startsWith("//")?intended:"/dashboard");},[]);
+ useEffect(()=>{const intended=new URLSearchParams(window.location.search).get("next")||"/dashboard";setNextPage(/^\/(?![\/\\])[^\\\x00-\x1f]*$/.test(intended)?intended:"/dashboard");},[]);
  useEffect(()=>{if(cloudEnabled&&authenticated)router.replace(nextPage);},[cloudEnabled,authenticated,nextPage,router]);
  async function submit(e:FormEvent<HTMLFormElement>){
-  e.preventDefault();setError("");setMessage("");setWorking(true);
+  e.preventDefault();setError("");setMessage("");if(form==="signup"&&!accepted){setError("Confirm you are 18 or older and accept the terms.");return;}setWorking(true);
   const result=form==="signup"?await signUp(name,email,password):await signIn(email,password);
   setWorking(false);
   if(!result.ok){setError(result.error);return;}
@@ -31,6 +32,7 @@ export default function Login(){
     {form==="signup"&&<label className="field"><span>YOUR NAME</span><input minLength={2} maxLength={80} required autoComplete="name" value={name} onChange={e=>setName(e.target.value)} placeholder="Your full name"/></label>}
     <label className="field"><span>EMAIL ADDRESS</span><input type="email" required autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label>
     <label className="field"><span>PASSWORD</span><input type="password" minLength={form==="signup"?8:1} required autoComplete={form==="signup"?"new-password":"current-password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters for signup"/></label>
+    {form==="signup"&&<label className="consent-row"><input type="checkbox" required checked={accepted} onChange={e=>setAccepted(e.target.checked)}/><span>I am 18 or older and agree to the <Link href="/terms">Terms</Link>. I have read the <Link href="/privacy">Privacy Notice</Link>.</span></label>}
     {error&&<div className="booking-error" role="alert">{error}</div>}
     {message&&<div className="auth-message" role="status">{message}</div>}
     <button className="btn btn-dark full-width" disabled={working} type="submit">{working?"Working...":form==="login"?"Sign in":"Create account"} <ArrowRight size={18}/></button>
